@@ -30,4 +30,17 @@ public class RateController {
         log.info("RateController | getRates is called");
         return ResponseEntity.ok(rateService.calculateRate(base, target,date));
     }
+
+@RateLimiter(name ="basic")
+@PostMapping("/calculate")
+ public ResponseEntity<PayableAmountResponse> calculatePayableAmount(@RequestBody Bill bill){
+	double payableAmount= rateService.calculatePayableAmount(bill);
+	double discount = rateService.calculateDiscount(bill);
+	double totalAfterDiscount = bill.getTotalAmount() - discount;
+	EnumCurrency originalCurrency = EnumCurrency.valueOf(bill.getOriginalCurrency().toUpperCase());
+	EnumCurrency targetCurrency = EnumCurrency.valueOf(bill.getTargetCurrency().toUpperCase());
+	double exchangeRate = rateService.getExchangeRate(originalCurrency, targetCurrency);
+
+	PayableAmountResponse response = new PayableAmountResponse(bill.getTotalAmount(), discount, exchangeRate, payableAmount);
+	return ResponseEntity.ok(response);
 }
